@@ -2,18 +2,18 @@
 # -*-coding: utf-8 -*-
 
 """
-    N   -- natural numbers
-    N0  -- natural numbers w0ith 0
+     N   -- { 1, 2, 3 ... }
+    N0  -- { 0, 1, 2, 3 ... }
 """
 
 
 import math
 
-
-F = []
-N = len(F)
-# TODO: Find out what is n1
-N1 = 42
+# fs = g**s
+N = 2001
+N1 = 10*N
+G = 0.9
+F = [G**i for i in range(N)]
 
 
 def epsilon_x(s, r):
@@ -83,13 +83,12 @@ def gamma_x(s, v, r, w0, n=N):
     if s == n-r+1:
         return gamma(1, v, n, r)
 
-    return 1 + q_x(s, r, w0)*(v**2)/gamma_x(s+1, v, r, w0)
+    return 1 + q_x(s, r, w0)*v/gamma_x(s+1, v, r, w0)
 
 
 def gamma(l, v, n, r, n1=N1):
     """
         l belong {1, ..., n1}
-        
     """
     r = abs(r)
 
@@ -97,7 +96,7 @@ def gamma(l, v, n, r, n1=N1):
         # v = x + iy
         x, y = v.real, v.imag
         # (1 + v**2)**0.5 = exp(i*(fi + fi_1)/2) * (1 + x**2 - y**2 + 4(x**2)(y**2))**0.5
-        sqrt_expression = math.exp**((fi(v)+fi_1(v))*1j/2)*((1+x**2-y**2)**2 + 4*x**2*y**2)**0.5
+        sqrt_expression = (math.exp(1)**(fi(v)+fi_1(v))*1j/2)*((1+x**2-y**2)**2 + 4*x**2*y**2)**0.5
         A = (-1 + sqrt_expression)/2
         return A + 1
 
