@@ -6,119 +6,72 @@
     N0  -- { 0, 1, 2, 3 ... }
 """
 
+from sympy import *
 
-import math
 
-# fs = g**s
 N = 2001
-N1 = 10*N
-G = 0.9
-F = [G**i for i in range(N)]
+N1 = 240*N
+G = 0.999
 
 
-def epsilon_x(s, r):
-    r = abs(r)
-    return (s*(s+2*r))**0.5
+s, r, w0, i, alpha, l, j = symbols('s r w0 i alpha l j')
+f = G**i
+epsilin_x = sqrt(s*(s+2*r))
+kappa_x = (2*(s+abs(r))+1)*(1-w0*f.subs(i, s+r))
 
 
-def kappa_x(s, r, w0, f=F):
-    r = abs(r)
-    return(2*(s+r)+1)*(1-w0*f[s+r])
+v = Symbol('v')
+fi = Piecewise(
+    (atan(im(v-1j)/re(v-1j)), re(v-1j) > 0),
+    (-pi/2, And(Eq(re(v-1j), 0), im(v-1j) < 0)),
+    (-pi/2 - atan(re(v-1j)/im(v-1j)), And(re(v-1j)<0, im(v-1j)<0)),
+    (-pi, And(re(v-1j)<0, Eq(im(v-1j), 0))),
+    (-pi + atan(im(v-1j)/re(v-1j)), And(re(v-1j)<0, im(v-1j)>0))
+)
+
+fi_1 = Piecewise(
+    (atan(im(v+1j)/re(v+1j)), re(v+1j) > 0),
+    (pi/2, And(Eq(re(v+1j), 0), im(v+1j) < 0)),
+    (pi/2 - atan(re(v+1j)/im(v+1j)), And(re(v+1j)<0, im(v+1j)<0)),
+    (pi, And(re(v+1j)<0, Eq(im(v+1j), 0))),
+    (pi + atan(im(v+1j)/re(v+1j)), And(re(v+1j)<0, im(v+1j)>0))
+)
 
 
-def fi(v):
-    v = v - 1j
+q_x = Piecewise(
+    ((s*(s+2*r))/((2*(s+r)+1)*(2*(s+r+1)+1)*(1-w0*f.subs(i, s+r)*(1-w0*f.subs(i, s+r+1)))), And(s+r+1<=N, N>=2)),
+    ((s*(s+2*r))/((2*(s+r)+1)*(2*(s+r+1)+1)*(1-w0*f.subs(i, s+r))), Eq(s+r, N)),
+    ((s*(s+2*r))/((2*(s+r)+1)*(2*(s+r+1)+1)), s >= N-r+1)
+)
 
-    if v.real > 0:
-        return math.atan(v.imag/v.real)
-    elif v.real == 0 and v.imag < 0:
-        return -math.pi/2
-    elif v.real < 0 and v.imag < 0:
-        return -math.pi/2 - math.atan(v.real/v.imag)
-    elif v.real < 0 and v.imag == 0:
-        return -math.pi
-    elif v.real < 0 and v.imag > 0:
-        return -math.pi + math.atan(v.imag/v.real)
+h_x = 1j*v*epsilon_x({s: alpha, r: r})/(kappa_x({s: alpha, r: r, w0: w0})*gamma_x({s: alpha, v: v**2, r: r, w0: w0}))
+a = ((n+l)**2-r**2)*v**2/((2*(n+l)+1)*(2*(n+l+1)+1))
 
+#TODO: Recursion!!!
+gamma_x = Piecewise(
+    (gamma.subs({l: 1, v: v, r: r}), Eq(s, n-r+1)),
+    (1 + q_x.subs({s:s, r:r, w0:w0})*v/gamma_x.subs({s:s+1, v:v, r:r, w0:w0}), True)
+)
 
-def fi_1(v):
-    v = v + 1j
+gamma = Piecewise(
+    ((-1+(exp(1)**(fi(v)+fi_1(v))*1j/2)*((1+re(v)**2-im(v)**2)**2 + 4*re(v)**2*im(v)**2)**0.5)/2 + 1, Eq(l, N1 + 1)),
+    (1 + a.subs({l:l, v:v, r:r, w0:w0})/gamma.subs({l:l+1, v:v, r:r}), True)
+)
 
-    if v.real > 0:
-        return math.atan(v.imag/v.real)
-    elif v.real == 0 and v.imag < 0:
-        return math.pi/2
-    elif v.real < 0 and v.imag < 0:
-        return math.pi/2 - math.atan(v.real/v.imag)
-    elif v.real < 0 and v.imag == 0:
-        return math.pi
-    elif v.real < 0 and v.imag > 0:
-        return math.pi + math.atan(v.imag/v.real)
+psi_x = Product(h_x.subs({l:l, v:v, r:r, w0:w0}), (l, 1, j+1))
 
 
-def q_x(s, r, w0, n=N, f=F):
-    r = abs(r)
-    result = s*(s+2*r)
-
-    if s+1+r <= n and n >= 2:
-        return result/((2*(s+r)+1)*(2*(s+r+1)+1)*(1-w0*f[s+r])*(1-w0*f[s+r+1]))
-    elif s+r == n:
-        return result/((2*(s+r)+1)*(2*(s+r+1)+1)*(1-w0*f[s+r]))
-    elif s >= n-r+1:
-        return result/((2*(s+r)+1)*(2*(s+r+1)+1))
-
-
-def h_x(alpha, v, r, w0):
+def P(j,r,m1):
     """
-        alpha belong N
-        asb(r) belong N0
+        j,r belong N0
     """
     r = abs(r)
-    return 1j*v*epsilon_x(alpha, r)/(kappa_x(alpha, r, w0)*gamma_x(alpha, v**2, r, w0))
+    return ((factorial(j)/factorial(j)(j+2*r))**0.5)*P_legandr(j,r,m1)
 
-
-def gamma_x(s, v, r, w0, n=N):
-    r = abs(r)
-
-    if s == n-r+1:
-        return gamma(1, v, n, r)
-
-    return 1 + q_x(s, r, w0)*v/gamma_x(s+1, v, r, w0)
-
-
-def gamma(l, v, n, r, n1=N1):
+def nu_x(a,v,r,w0,m1):
     """
-        l belong {1, ..., n1}
+    a belongs to {1,...,n-r},  n-r>=1
     """
     r = abs(r)
-
-    if l == n1 + 1:
-        # v = x + iy
-        x, y = v.real, v.imag
-        # (1 + v**2)**0.5 = exp(i*(fi + fi_1)/2) * (1 + x**2 - y**2 + 4(x**2)(y**2))**0.5
-        sqrt_expression = (math.exp(1)**(fi(v)+fi_1(v))*1j/2)*((1+x**2-y**2)**2 + 4*x**2*y**2)**0.5
-        A = (-1 + sqrt_expression)/2
-        return A + 1
-
-    return 1 + a(l, v, n, r)/gamma(l+1, v, n, r)
-
-
-def psi_x(j, v, r, w0):
-    """
-        j belong N
-        abs(r) belong N0
-    """
-    result = 1
-
-    for l in range(1, j+1):
-        result *= h_x(l, v, r, w0)
-
-    return result
-
-
-def a(l, v, n, r):
-    """
-        l belongs {1, ..., n1}, n1 >> n
-    """
-    r = abs(r)
-    return ((n+l)**2-r**2)*v**2/((2*(n+l)+1)*(2*(n+l+1)+1))
+    i = 1j
+    return (1/(kappa_x(a,r,w0)*gamma_x(a,v**2,r,w0)))*(i*v*epsilon_x(a+1,r)*nu_x(a+1,v,r,w0) + (2*(a+r) + 1)*fi(a+r)*P(a+r,r,m1))
