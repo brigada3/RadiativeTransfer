@@ -1,14 +1,24 @@
 #!/usr/bin/env python3
 # -*-coding: utf-8 -*-
 
-from b_system import *
-
+import b_system
+import sympy
 
 def main():
-    print("epsilon_x:", epsilon_x(1000, 1000))
-    print("kappa_x:", kappa_x(1000,0,1))
-
-
+    sympy.init_printing()
+    
+    
+    sympy.pprint(b_system.f)
+    sympy.pprint(b_system.epsilon_x)
+    sympy.pprint(b_system.kappa_x)
+    sympy.pprint(b_system.fi)
+    sympy.pprint(b_system.fi_1)
+    sympy.pprint(b_system.q_x)
+    sympy.pprint(b_system.get_gamma())
+    sympy.pprint(b_system.get_gamma_x())
+    sympy.pprint(b_system.h_x)
+    sympy.pprint(b_system.a)
+    sympy.pprint(b_system.psi_x)
 
 if __name__ == '__main__':
     main()
