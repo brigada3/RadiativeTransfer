@@ -7,7 +7,6 @@ import sympy
 def main():
     sympy.init_printing()
     
-    
     sympy.pprint(b_system.f)
     sympy.pprint(b_system.epsilon_x)
     sympy.pprint(b_system.kappa_x)
@@ -19,6 +18,7 @@ def main():
     sympy.pprint(b_system.h_x)
     sympy.pprint(b_system.a)
     sympy.pprint(b_system.psi_x)
+    sympy.pprint(b_system.get_Px())
 
 if __name__ == '__main__':
     main()

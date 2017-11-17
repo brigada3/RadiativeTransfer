@@ -41,22 +41,29 @@ q_x = sympy.Piecewise(
 )
 
 def get_gamma(l=l, v=v, n=n, r=r):
-    if l.is_Number and v.is_Number and n.is_Number and r.is_Number:
-        if l == N1 + 1:
-            return (-1+(exp(1)**(fi.subs({v: v})+fi_1.subs({v: v}))*1j/2)*((1+sympy.re(v)**2-sympy.im(v)**2)**2 + 4*sympy.re(v)**2*sympy.im(v)**2)**0.5)/2 + 1
-        else:
-            return 1+a.subs( {l:l, v:v, r:r, w0:w0, n:N} )/get_gamma(l+1, v, n, r).subs( {l:l+1, v:v, r:r, n:n})
+    if l == N1 + 1:
+        return (
+        (-1 + (exp(1)**(fi.subs({v: v})+fi_1.subs({v: v}))*1j/2) * 
+        ( (1+sympy.re(v)**2-sympy.im(v)**2)**2 + 4*sympy.re(v)**2*sympy.im(v)**2)**0.5  ) / 2 + 1
+    )
+    elif l.is_Number:
+        gamma_l_plus_1 = get_gamma(l+1, v, n, r).subs( {l:l+1, v:v, r:r, n:n})
     else:
-        return 1+a.subs( {l:l, v:v, r:r, w0:w0, n:N} )/sympy.Function('gamma')(l+1, v, n, r)
+        gamma_l_plus_1 = sympy.Function('gamma')(l+1, v, n, r)
         
+    return 1+a.subs( {l:l, v:v, r:r, w0:w0, n:N} ) / gamma_l_plus_1
+
+
 def get_gamma_x(s=s, v=v, r=r, w0=w0):
-    if s.is_Number and v.is_Number and r.is_Number and w0.is_Number:
-        if s == N-r+1:
-            return gamma.subs({l: 1, v: v, r: r})
-        else:
-            return 1 + q_x.subs({s:s, r:r, w0:w0})*v/get_gamma_x(s+1, v, r, w0).subs({s: s+1, v: v, r: r, w0: w0})
+    if s == N-r+1:
+        return gamma.subs( {l: 1, v: v, r: r} )
+    elif s.is_Number and r.is_Number:
+        gamma_x_s_plus_1 = get_gamma_x(s+1, v, r, w0).subs( {s: s+1, v: v, r: r, w0: w0} )
     else:
-        return 1 + q_x.subs({s:s, r:r, w0:w0})*v/sympy.Function('gamma_x')(s+1, v, r, w0)
+        gamma_x_s_plus_1 = sympy.Function('gamma_x')(s+1, v, r, w0)
+        
+    return 1 + q_x.subs( {s:s, r:r, w0:w0} )*v/gamma_x_s_plus_1
+
 
 h_x = (1j*v*epsilon_x.subs( {s: alpha, r: r } )/
     (kappa_x.subs( {s: alpha, r: r, w0: w0} )*
