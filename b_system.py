@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
 # -*-coding: utf-8 -*-
 
-"""
-     N   -- { 1, 2, 3 ... }
-    N0  -- { 0, 1, 2, 3 ... }
-"""
-
 import sympy 
 
 
@@ -16,6 +11,8 @@ G = 0.999
 
 s, r, w0, i, n = sympy.symbols('s r w0 i n')
 alpha, l, j, v = sympy.symbols('alpha l j v')
+mu = sympy.symbols('mu')
+
 
 f = G**i
 epsilon_x = sympy.sqrt(s*(s+2*r))
@@ -68,3 +65,20 @@ h_x = (1j*v*epsilon_x.subs( {s: alpha, r: r } )/
 a = ((n+l)**2-r**2)*v**2/((2*(n+l)+1)*(2*(n+l+1)+1))
 
 psi_x = sympy.Product(h_x.subs({l:l, v:v, r:r, w0:w0}), (l, 1, j+1))
+
+def get_Px(i=s+r+1, r=r, mu=mu):
+    if i == r-1:
+        return 0
+    elif i == r:
+        return (1-mu**2)**(r/2) * (2)**(-r) * sympy.sqrt(sympy.factorial(2*r)/sympy.factorial(r)**2)
+    elif i.is_Number and r.is_Number:
+        Px_i_minus_1 = get_Px(i-1, r, mu).subs( {i: i-1, r: r, mu: mu} )
+        Px_i_minus_2 = get_Px(i-2, r, mu).subs( {i: i-2, r: r, mu: mu} )
+    else:
+        Px_i_minus_1 = sympy.Function('Px')(i-1, r, mu)
+        Px_i_minus_2 = sympy.Function('Px')(i-2, r, mu)
+
+    return (
+        ( 2*i*mu*Px_i_minus_1 - sympy.sqrt((i-r-1)*(i+r-1)) * Px_i_minus_2 ) *
+        ( (i-r)*(i+r) )**(-1/2)
+    )
