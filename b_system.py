@@ -68,10 +68,29 @@ def P(j,r,m1):
     r = abs(r)
     return ((factorial(j)/factorial(j)(j+2*r))**0.5)*P_legandr(j,r,m1)
 
-def nu_x(a,v,r,w0,m1):
-    """
-    a belongs to {1,...,n-r},  n-r>=1
-    """
-    r = abs(r)
-    i = 1j
-    return (1/(kappa_x(a,r,w0)*gamma_x(a,v**2,r,w0)))*(i*v*epsilon_x(a+1,r)*nu_x(a+1,v,r,w0) + (2*(a+r) + 1)*fi(a+r)*P(a+r,r,m1))
+
+
+#a belongs to {1,...,n-r},  n-r>=1
+#var a,v,r,w0,m1
+
+# def nu_x(a,v,r,w0,m1):
+#     """
+#     a belongs to {1,...,n-r},  n-r>=1
+#     """
+#     r = abs(r)
+#     i = 1j
+#     return (1/(kappa_x(a,r,w0)*gamma_x(a,v**2,r,w0)))*(i*v*epsilon_x(a+1,r)*nu_x(a+1,v,r,w0) + (2*(a+r) + 1)*fi(a+r)*P(a+r,r,m1))
+
+
+# nu_x =  (1/(kappa_x(a,r,w0)*gamma_x(a,v**2,r,w0)))*(i*v*epsilon_x(a+1,r)*nu_x(a+1,v,r,w0) + (2*(a+r) + 1)*fi(a+r)*P(a+r,r,m1))
+
+# gamma_x.subs({s:a, v:v**2, r:r, w0:w0})
+# kappa_x.subs({s: a, r: r, w0: w0})
+# epsilon_x.subs({s: a+1, r: r})
+# nu_x.subs({a:a+1,v:v,r:r,w0:w0})
+# fi.subs({v:a+r})
+# P.subs({a:a+r,r:r,m1:m1}
+
+#обратная рекурсия :(
+#все символами вроде подставляется ( и i=1j, r=abs(r) )
+nu_x =  (1/(kappa_x.subs({s: a, r: r, w0: w0})*gamma_x.subs({s:a, v:v**2, r:r, w0:w0})))*(i*v*epsilon_x.subs({s: a+1, r: r})*nu_x.subs({a:a+1,v:v,r:r,w0:w0}) + (2*(a+r) + 1)*fi.subs({v:a+r})*P.subs({a:a+r,r:r,m1:m1}))
