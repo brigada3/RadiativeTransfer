@@ -9,7 +9,7 @@ N1 = 240*N
 G = 0.999
 
 
-s, r, w0, i, n = sympy.symbols('s r w0 i n')
+s, r, w0, i, n, m1 = sympy.symbols('s r w0 i n m1')
 alpha, l, j, v = sympy.symbols('alpha l j v')
 mu = sympy.symbols('mu')
 
@@ -72,34 +72,6 @@ h_x = (1j*v*epsilon_x.subs( {s: alpha, r: r } )/
 a = ((n+l)**2-r**2)*v**2/((2*(n+l)+1)*(2*(n+l+1)+1))
 
 
-#a belongs to {1,...,n-r},  n-r>=1
-#var a,v,r,w0,m1
-
-# def nu_x(a,v,r,w0,m1):
-#     """
-#     a belongs to {1,...,n-r},  n-r>=1
-#     """
-#     r = abs(r)
-#     i = 1j
-#     return (1/(kappa_x(a,r,w0)*gamma_x(a,v**2,r,w0)))*(i*v*epsilon_x(a+1,r)*nu_x(a+1,v,r,w0) + (2*(a+r) + 1)*fi(a+r)*P(a+r,r,m1))
-
-
-# nu_x =  (1/(kappa_x(a,r,w0)*gamma_x(a,v**2,r,w0)))*(i*v*epsilon_x(a+1,r)*nu_x(a+1,v,r,w0) + (2*(a+r) + 1)*fi(a+r)*P(a+r,r,m1))
-
-# gamma_x.subs({s:a, v:v**2, r:r, w0:w0})
-# kappa_x.subs({s: a, r: r, w0: w0})
-# epsilon_x.subs({s: a+1, r: r})
-# nu_x.subs({a:a+1,v:v,r:r,w0:w0})
-# fi.subs({v:a+r})
-# P.subs({a:a+r,r:r,m1:m1}
-
-#обратная рекурсия :(
-#все символами вроде подставляется ( и i=1j, r=abs(r) )
-nu_x =  (1/(kappa_x.subs({s: a, r: r, w0: w0})*gamma_x.subs({s:a, v:v**2, r:r, w0:w0})))*(i*v*epsilon_x.subs({s: a+1, r: r})*nu_x.subs({a:a+1,v:v,r:r,w0:w0}) + (2*(a+r) + 1)*fi.subs({v:a+r})*P.subs({a:a+r,r:r,m1:m1}))
-
-
-
-psi_x = sympy.Product(h_x.subs({l:l, v:v, r:r, w0:w0}), (l, 1, j+1))
 
 def get_Px(i=s+r+1, r=r, mu=mu):
     if i == r-1:
@@ -118,3 +90,14 @@ def get_Px(i=s+r+1, r=r, mu=mu):
         ( (i-r)*(i+r) )**(-1/2)
     )
 
+
+
+
+psi_x = sympy.Product(h_x.subs({l:l, v:v, r:r, w0:w0}), (l, 1, j+1))
+
+def get_nu_x(a=a, v=v, w0=w0, m1=m1, r=r):
+    if a.is_Number and v.is_Number and w0.is_Number and m1.is_Number and r.is_Number:
+        nu_x_a_plus_1 = get_nu_x(a+1, v, w0, m1, r).subs( {a:a+1, v:v, r:r, w0:w0, m1:m1} )
+    else:
+        nu_x_a_plus_1 = sympy.Function('nu_x')(a+1, v, w0, m1, r)
+    return  (1/(kappa_x.subs({s: a, r: r, w0: w0})*get_gamma_x(a, v**2, r, w0)))*(i*v*epsilon_x.subs({s: a+1, r: r})*nu_x_a_plus_1 + (2*(a+r) + 1)*fi.subs({v:a+r})*get_Px(a+r,r,m1))

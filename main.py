@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*-coding: utf-8 -*-
 
-from sympy import *
+import sympy
 import b_system
 
-class h(Function):
+class h(sympy.Function):
     @classmethod
     def eval(cls, n):
         if n == 0:
@@ -30,6 +30,7 @@ def main():
     sympy.pprint(b_system.a)
     sympy.pprint(b_system.psi_x)
     sympy.pprint(b_system.get_Px())
+    sympy.pprint(b_system.get_nu_x())
 
 
 if __name__ == '__main__':
