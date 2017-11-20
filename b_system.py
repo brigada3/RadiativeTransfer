@@ -9,9 +9,9 @@ N1 = 240*N
 G = 0.999
 
 
-s, r, w0, i, n, m1 = sympy.symbols('s r w0 i n m1')
+s, r, w0, i, n = sympy.symbols('s r w0 i n')
 alpha, l, j, v = sympy.symbols('alpha l j v')
-mu = sympy.symbols('mu')
+mu, mu_1 = sympy.symbols('mu mu_1')
 
 
 f = G**i
@@ -72,7 +72,6 @@ h_x = (1j*v*epsilon_x.subs( {s: alpha, r: r } )/
 a = ((n+l)**2-r**2)*v**2/((2*(n+l)+1)*(2*(n+l+1)+1))
 
 
-
 def get_Px(i=s+r+1, r=r, mu=mu):
     if i == r-1:
         return 0
@@ -90,14 +89,25 @@ def get_Px(i=s+r+1, r=r, mu=mu):
         ( (i-r)*(i+r) )**(-1/2)
     )
 
-
-
-
 psi_x = sympy.Product(h_x.subs({l:l, v:v, r:r, w0:w0}), (l, 1, j+1))
 
-def get_nu_x(a=a, v=v, w0=w0, m1=m1, r=r):
-    if a.is_Number and v.is_Number and w0.is_Number and m1.is_Number and r.is_Number:
-        nu_x_a_plus_1 = get_nu_x(a+1, v, w0, m1, r).subs( {a:a+1, v:v, r:r, w0:w0, m1:m1} )
+
+def get_nu_x(alpha=alpha, v=v, w0=w0, mu_1=mu_1, r=r):
+    if alpha == N-r+1:
+        return 0
+    elif alpha == N-r:
+        return (
+            ((2*N+1)*f.subs({i:N})*get_Px(alpha+r, r, mu_1))/
+            (kappa_x.subs( {s:N-r, r:r, w0:w0} )*get_gamma_x(N-r, v**2, r, w0))
+        )
+    elif alpha.is_Number:
+        nu_x_alpha_plus_1 = get_nu_x(alpha+1, v, w0, mu_1)
     else:
-        nu_x_a_plus_1 = sympy.Function('nu_x')(a+1, v, w0, m1, r)
-    return  (1/(kappa_x.subs({s: a, r: r, w0: w0})*get_gamma_x(a, v**2, r, w0)))*(i*v*epsilon_x.subs({s: a+1, r: r})*nu_x_a_plus_1 + (2*(a+r) + 1)*fi.subs({v:a+r})*get_Px(a+r,r,m1))
+        nu_x_alpha_plus_1 = sympy.Function('nu_x')(alpha+1, v, w0, mu_1)
+
+    return (
+        (kappa_x.subs( {s:alpha, r:r, w0:w0} )*get_gamma_x(alpha, v**2, r, w0))**(-1)*
+        (1j*v*epsilon_x.subs( {s:alpha+1, r:r} )*nu_x_alpha_plus_1 + 
+            (2*(alpha+r)+1)*f.subs({i:alpha+r})*get_Px(alpha+r, r, mu_1)
+        )
+    )
