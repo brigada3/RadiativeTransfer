@@ -4,16 +4,6 @@
 import sympy
 import b_system
 
-class h(sympy.Function):
-    @classmethod
-    def eval(cls, n):
-        if n == 0:
-            return 1
-        else:
-            return diff(h(x-1))
-
-
-
 
 def main():
     sympy.init_printing()
