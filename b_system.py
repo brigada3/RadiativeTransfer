@@ -43,7 +43,7 @@ q_x = sympy.Piecewise(
 def get_gamma(l=l, v=v, n=n, r=r):
     if l == N1 + 1:
         return (
-        (-1 + (exp(1)**(fi.subs({v: v})+fi_1.subs({v: v}))*1j/2) *
+        (-1 + (sympy.exp(1)**(fi.subs({v: v})+fi_1.subs({v: v}))*1j/2) *
         ( (1+sympy.re(v)**2-sympy.im(v)**2)**2 + 4*sympy.re(v)**2*sympy.im(v)**2)**0.5  ) / 2 + 1
     )
     elif l.is_Number:
@@ -89,8 +89,10 @@ def get_Px(i=s+r+1, r=r, mu=mu):
         ( (i-r)*(i+r) )**(-1/2)
     )
 
-psi_x = sympy.Product(h_x.subs({l:l, v:v, r:r, w0:w0}), (l, 1, j+1))
-
+psi_x = sympy.Piecewise(
+    (1, sympy.Eq(j, 0)), 
+    (sympy.Product(h_x.subs({l:l, v:v, r:r, w0:w0}), (l, 1, j)), True)
+)
 
 def get_nu_x(alpha=alpha, v=v, w0=w0, mu_1=mu_1, r=r):
     if alpha == N-r+1:
@@ -111,3 +113,25 @@ def get_nu_x(alpha=alpha, v=v, w0=w0, mu_1=mu_1, r=r):
             (2*(alpha+r)+1)*f.subs({i:alpha+r})*get_Px(alpha+r, r, mu_1)
         )
     )
+
+
+def get_b(alpha=alpha, v=v, w0=w0, mu_1=mu_1):
+    if alpha == 0 and N-r >= 0:
+        return (
+            (kappa_x.subs({s:sympy.Symbol('0'), r:r, w0:w0})*get_gamma_x(sympy.Symbol('0'), v**2, r, w0))**(-1)*
+            sympy.Sum(psi_x.subs({j:j, v:v, r:r, w0:w0}), (j, 0, N-r))*f.subs({i:j+r})*get_Px(j+r, r, mu_1)
+        )
+    elif alpha.is_Number and 1 <= alpha <= N-r and n-r > 1:
+        b_alpha_minus_1 = get_b(alpha-1, v, w0, mu_1)
+    else:
+        b_alpha_minus_1 = sympy.Function('b')(alpha-1, v, w0, mu_1)
+    
+    return (
+        h_x.subs({alpha:alpha, v:v, r:r, w0:w0})*b_alpha_minus_1 +
+        get_nu_x(alpha, v, w0, mu_1)
+    )
+
+F = sympy.Sum(
+    (2*(s+r+1))*get_b(s, v, w0, mu_1)*get_Px(s+r, r, mu),
+    (s, 0, N)
+)

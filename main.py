@@ -21,6 +21,8 @@ def main():
     sympy.pprint(b_system.psi_x)
     sympy.pprint(b_system.get_Px())
     sympy.pprint(b_system.get_nu_x())
+    sympy.pprint(b_system.get_b())
+    sympy.pprint(b_system.F)
 
 
 if __name__ == '__main__':
