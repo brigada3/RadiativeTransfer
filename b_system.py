@@ -28,10 +28,10 @@ fi = sympy.Piecewise(
 
 fi_1 = sympy.Piecewise(
     (sympy.atan(sympy.im(v+1j)/sympy.re(v+1j)), sympy.re(v+1j) > 0),
-    (sympy.pi/2, sympy.And(sympy.Eq(sympy.re(v+1j), 0), sympy.im(v+1j) < 0)),
-    (sympy.pi/2 - sympy.atan(sympy.re(v+1j)/sympy.im(v+1j)), sympy.And(sympy.re(v+1j)<0, sympy.im(v+1j)<0)),
+    (sympy.pi/2, sympy.And(sympy.Eq(sympy.re(v+1j), 0), sympy.im(v+1j) > 0)),
+    (sympy.pi/2 - sympy.atan(sympy.re(v+1j)/sympy.im(v+1j)), sympy.And(sympy.re(v+1j)<0, sympy.im(v+1j)>0)),
     (sympy.pi, sympy.And(sympy.re(v+1j)<0, sympy.Eq(sympy.im(v+1j), 0))),
-    (sympy.pi + sympy.atan(sympy.im(v+1j)/sympy.re(v+1j)), sympy.And(sympy.re(v+1j)<0, sympy.im(v+1j)>0))
+    (sympy.pi + sympy.atan(sympy.im(v+1j)/sympy.re(v+1j)), sympy.And(sympy.re(v+1j)<0, sympy.im(v+1j)<0))
 )
 
 q_x = sympy.Piecewise(
@@ -61,13 +61,13 @@ def get_gamma_x(s=s, v=v, r=r, w0=w0):
         gamma_x_s_plus_1 = get_gamma_x(s+1, v, r, w0).subs( {s: s+1, v: v, r: r, w0: w0} )
     else:
         gamma_x_s_plus_1 = sympy.Function('gamma_x')(s+1, v, r, w0)
-
     return 1 + q_x.subs( {s:s, r:r, w0:w0} )*v/gamma_x_s_plus_1
 
 
-h_x = (1j*v*epsilon_x.subs( {s: alpha, r: r } )/
-    (kappa_x.subs( {s: alpha, r: r, w0: w0} )*
-    get_gamma_x(alpha, v**2, r, w0)).subs( {s: alpha, v: v**2, r: r, w0: w0}))
+h_x = (
+    1j*v*epsilon_x.subs( {s:alpha, r:r} ) *
+    (kappa_x.subs( {s:alpha, r:r, w0:w0} )*get_gamma_x(alpha, v**2, r, w0))**(-1)
+)
 
 a = ((n+l)**2-r**2)*v**2/((2*(n+l)+1)*(2*(n+l+1)+1))
 
@@ -119,7 +119,10 @@ def get_b(alpha=alpha, v=v, w0=w0, mu_1=mu_1):
     if alpha == 0 and N-r >= 0:
         return (
             (kappa_x.subs({s:sympy.Symbol('0'), r:r, w0:w0})*get_gamma_x(sympy.Symbol('0'), v**2, r, w0))**(-1)*
-            sympy.Sum(psi_x.subs({j:j, v:v, r:r, w0:w0}), (j, 0, N-r))*f.subs({i:j+r})*get_Px(j+r, r, mu_1)
+            sympy.Sum(
+                psi_x.subs({j:j, v:v, r:r, w0:w0})*(2*(j+r)+1)*f.subs({i:j+r})*get_Px(j+r, r, mu_1),
+                (j, 0, N-r)
+            )
         )
     elif alpha.is_Number and 1 <= alpha <= N-r and n-r > 1:
         b_alpha_minus_1 = get_b(alpha-1, v, w0, mu_1)
@@ -131,7 +134,7 @@ def get_b(alpha=alpha, v=v, w0=w0, mu_1=mu_1):
         get_nu_x(alpha, v, w0, mu_1)
     )
 
-F = sympy.Sum(
+F = (0.5)*sympy.Sum(
     (2*(s+r+1))*get_b(s, v, w0, mu_1)*get_Px(s+r, r, mu),
     (s, 0, N)
 )
