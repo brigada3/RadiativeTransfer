@@ -47,7 +47,7 @@ def get_gamma(l=l, v=v, n=n, r=r):
         ( (1+sympy.re(v)**2-sympy.im(v)**2)**2 + 4*sympy.re(v)**2*sympy.im(v)**2)**0.5  ) / 2 + 1
     )
     elif l.is_Number:
-        gamma_l_plus_1 = get_gamma(l+1, v, n, r).subs( {l:l+1, v:v, r:r, n:n})
+        gamma_l_plus_1 = get_gamma(l+1, v, n, r)
     else:
         gamma_l_plus_1 = sympy.Function('gamma')(l+1, v, n, r)
 
@@ -56,9 +56,9 @@ def get_gamma(l=l, v=v, n=n, r=r):
 
 def get_gamma_x(s=s, v=v, r=r, w0=w0):
     if s == N-r+1:
-        return gamma.subs( {l: 1, v: v, r: r} )
+        return get_gamma(1, v, N, r)
     elif s.is_Number and r.is_Number:
-        gamma_x_s_plus_1 = get_gamma_x(s+1, v, r, w0).subs( {s: s+1, v: v, r: r, w0: w0} )
+        gamma_x_s_plus_1 = get_gamma_x(s+1, v, r, w0)
     else:
         gamma_x_s_plus_1 = sympy.Function('gamma_x')(s+1, v, r, w0)
     return 1 + q_x.subs( {s:s, r:r, w0:w0} )*v/gamma_x_s_plus_1
@@ -78,8 +78,8 @@ def get_Px(i=s+r+1, r=r, mu=mu):
     elif i == r:
         return (1-mu**2)**(r/2) * (2)**(-r) * sympy.sqrt(sympy.factorial(2*r)/sympy.factorial(r)**2)
     elif i.is_Number and r.is_Number:
-        Px_i_minus_1 = get_Px(i-1, r, mu).subs( {i: i-1, r: r, mu: mu} )
-        Px_i_minus_2 = get_Px(i-2, r, mu).subs( {i: i-2, r: r, mu: mu} )
+        Px_i_minus_1 = get_Px(i-1, r, mu)
+        Px_i_minus_2 = get_Px(i-2, r, mu)
     else:
         Px_i_minus_1 = sympy.Function('Px')(i-1, r, mu)
         Px_i_minus_2 = sympy.Function('Px')(i-2, r, mu)
@@ -99,8 +99,8 @@ def get_nu_x(alpha=alpha, v=v, w0=w0, mu_1=mu_1, r=r):
         return 0
     elif alpha == N-r:
         return (
-            ((2*N+1)*f.subs({i:N})*get_Px(alpha+r, r, mu_1))/
-            (kappa_x.subs( {s:N-r, r:r, w0:w0} )*get_gamma_x(N-r, v**2, r, w0))
+            ((2*N+1)*f.subs({i:N})*get_Px(alpha+r, r, mu_1)) /
+            (kappa_x.`( {s:N-r, r:r, w0:w0} )*get_gamma_x(N-r, v**2, r, w0))
         )
     elif alpha.is_Number:
         nu_x_alpha_plus_1 = get_nu_x(alpha+1, v, w0, mu_1)
