@@ -40,18 +40,18 @@ q_x = sympy.Piecewise(
     ((s*(s+2*r))/((2*(s+r)+1)*(2*(s+r+1)+1)), s >= N-r+1)
 )
 
-def get_gamma(l=l, v=v, n=n, r=r):
-    if l == N1 + 1:
+def get_gamma(l=l, v=v, n=N, r=r, n1=N1):
+    if l == n1 + 1:
         return (
         (-1 + (sympy.exp(1)**(fi.subs({v: v})+fi_1.subs({v: v}))*1j/2) *
         ( (1+sympy.re(v)**2-sympy.im(v)**2)**2 + 4*sympy.re(v)**2*sympy.im(v)**2)**0.5  ) / 2 + 1
     )
     elif l.is_Number:
-        gamma_l_plus_1 = get_gamma(l+1, v, n, r)
+        gamma_l_plus_1 = get_gamma(l+1, v, n, r, n1)
     else:
-        gamma_l_plus_1 = sympy.Function('gamma')(l+1, v, n, r)
+        gamma_l_plus_1 = sympy.Function('gamma')(l+1, v, n, r, n1)
 
-    return 1+a.subs( {l:l, v:v, r:r, w0:w0, n:N} ) / gamma_l_plus_1
+    return 1+a.subs( {l:l, v:v, r:r, w0:w0, n:n} ) / gamma_l_plus_1
 
 
 def get_gamma_x(s=s, v=v, r=r, w0=w0):
@@ -77,7 +77,7 @@ def get_Px(i=s+r+1, r=r, mu=mu):
         return 0
     elif i == r:
         return (1-mu**2)**(r/2) * (2)**(-r) * sympy.sqrt(sympy.factorial(2*r)/sympy.factorial(r)**2)
-    elif i.is_Number and r.is_Number:
+    elif i.is_Number:
         Px_i_minus_1 = get_Px(i-1, r, mu)
         Px_i_minus_2 = get_Px(i-2, r, mu)
     else:
@@ -100,9 +100,9 @@ def get_nu_x(alpha=alpha, v=v, w0=w0, mu_1=mu_1, r=r):
     elif alpha == N-r:
         return (
             ((2*N+1)*f.subs({i:N})*get_Px(alpha+r, r, mu_1)) /
-            (kappa_x.`( {s:N-r, r:r, w0:w0} )*get_gamma_x(N-r, v**2, r, w0))
+            (kappa_x.subs( {s:N-r, r:r, w0:w0} )*get_gamma_x(N-r, v**2, r, w0))
         )
-    elif alpha.is_Number:
+    elif alpha.is_Number:    
         nu_x_alpha_plus_1 = get_nu_x(alpha+1, v, w0, mu_1)
     else:
         nu_x_alpha_plus_1 = sympy.Function('nu_x')(alpha+1, v, w0, mu_1)
@@ -115,17 +115,17 @@ def get_nu_x(alpha=alpha, v=v, w0=w0, mu_1=mu_1, r=r):
     )
 
 
-def get_b(alpha=alpha, v=v, w0=w0, mu_1=mu_1):
+def get_b(alpha=alpha, v=v, w0=w0, mu_1=mu_1, r=r):
     if alpha == 0 and N-r >= 0:
         return (
-            (kappa_x.subs({s:sympy.Symbol('0'), r:r, w0:w0})*get_gamma_x(sympy.Symbol('0'), v**2, r, w0))**(-1)*
+            (kappa_x.subs({s:sympy.Integer('0'), r:r, w0:w0})*get_gamma_x(sympy.Integer('0'), v**2, r, w0))**(-1)*
             sympy.Sum(
                 psi_x.subs({j:j, v:v, r:r, w0:w0})*(2*(j+r)+1)*f.subs({i:j+r})*get_Px(j+r, r, mu_1),
                 (j, 0, N-r)
             )
         )
-    elif alpha.is_Number and 1 <= alpha <= N-r and n-r > 1:
-        b_alpha_minus_1 = get_b(alpha-1, v, w0, mu_1)
+    elif alpha.is_Number and 1 <= alpha <= N-r and N-r > 1:
+        b_alpha_minus_1 = get_b(alpha-1, v, w0, mu_1, r)
     else:
         b_alpha_minus_1 = sympy.Function('b')(alpha-1, v, w0, mu_1)
     
@@ -137,4 +137,4 @@ def get_b(alpha=alpha, v=v, w0=w0, mu_1=mu_1):
 F = (0.5)*sympy.Sum(
     (2*(s+r+1))*get_b(s, v, w0, mu_1)*get_Px(s+r, r, mu),
     (s, 0, N)
-)
+)   
