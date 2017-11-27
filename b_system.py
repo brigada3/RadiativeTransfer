@@ -66,19 +66,31 @@ def gamma(l, v, r, n=N, n1=N1):
 
     while ind >= l:
         result = 1 + a(ind, v, r, n)/result
-        ind -= 1
+        ind = ind - 1
 
     return result
 
 
 def gamma_x(s, v, r, w0, n=N, n1=N1):
-    if s == n-r+1:
-        return gamma(1, v, n, r, n, n1)
-    elif s.is_Number and r.is_Number:
-        gamma_x_s_plus_1 = gamma_x(s+1, v, r, w0, n, n1)
-    else:
-        gamma_x_s_plus_1 = sympy.Function('gamma_x')(s+1, v, r, w0, n, n1)
-    return 1 + q_x(s, r, w0, n)*v/gamma_x_s_plus_1
+    ind = n-r
+    result = gamma(1, v, r, n, n1)]
+
+    while ind >= s:
+        result = 1 + q_x(s, r, w0, n)*v/result
+        ind -= 1
+    
+    return result
+
+
+#def gamma_x(s, v, r, w0, n=N, n1=N1):
+#    print(s, n-r+1)
+#    if s == n-r+1:
+#        return gamma(1, v, r, n, n1)
+#    elif s.is_Number:
+#        gamma_x_s_plus_1 = gamma_x(s+1, v, r, w0, n, n1)
+#    else:
+#        gamma_x_s_plus_1 = sympy.Function('gamma_x')(s+1, v, r, w0, n, n1)
+#    return 1 + q_x(s, r, w0, n)*v/gamma_x_s_plus_1
 
 
 def h_x(alpha, v, r, w0, n=N, n1=N1):
@@ -91,7 +103,6 @@ def h_x(alpha, v, r, w0, n=N, n1=N1):
 
 def a(l, v, r, n=N):
     math_func = ((n+l)**2-r**2)*v**2 /( (2*(n+l)+1) * (2*(n+l+1)+1) )
-
     return math_func
 
 
@@ -112,12 +123,13 @@ def Px(i, r, mu):
         ( (i-r)*(i+r) )**(-1/2)
     )
 
-def psi_x(j, v, r, w0):
+
+def psi_x(j, v, r, w0, n=N, n1=N1):
     l = sympy.symbols('l')
 
     math_func = sympy.Piecewise(
         ( 1, sympy.Eq(j, 0)),
-        ( sympy.Product(h_x(l, v, r, w0), (l, 1, j)), True)
+        ( sympy.Product(h_x(l, v, r, w0, n, n1), (l, 1, j)), True)
     )
 
     return math_func
@@ -132,9 +144,9 @@ def nu_x(alpha, v, r, w0, mu_1, n=N, n1=N1):
             (kappa_x(n-r, r, w0)*gamma_x(n-r, v**2, r, w0, n, n1))
         )
     elif alpha.is_Number:    
-        nu_x_alpha_plus_1 = nu_x(alpha+1, v, w0, mu_1)
+        nu_x_alpha_plus_1 = nu_x(alpha+1, v, w0, mu_1, n, n1)
     else:
-        nu_x_alpha_plus_1 = sympy.Function('nu_x')(alpha+1, v, w0, mu_1)
+        nu_x_alpha_plus_1 = sympy.Function('nu_x')(alpha+1, v, w0, mu_1, n, n1)
 
     return (
         (kappa_x(alpha, r, w0)*gamma_x(alpha, v**2, r, w0, n, n1))**(-1)*
@@ -150,7 +162,7 @@ def b(alpha, v, w0, mu_1, r, n=N, n1=N1):
         return (
             (kappa_x(sympy.Integer('0'), r, w0)*gamma_x(sympy.Integer('0'), v**2, r, w0, n, n1))**(-1)*
             sympy.Sum(
-                psi_x(j, v, r, w0)*(2*(j+r)+1)*f(j+r)*Px(j+r, r, mu_1),
+                psi_x(j, v, r, w0, n, n1)*(2*(j+r)+1)*f(j+r)*Px(j+r, r, mu_1),
                 (j, 0, n-r)
             )
         )
@@ -160,14 +172,15 @@ def b(alpha, v, w0, mu_1, r, n=N, n1=N1):
         b_alpha_minus_1 = sympy.Function('b')(alpha-1, v, w0, mu_1, n, n1)
     
     return (
-        h_x(alpha, v, r, w0) * b_alpha_minus_1 +
+        h_x(alpha, v, r, w0, n, n1) * b_alpha_minus_1 +
         nu_x(alpha, v, r, w0, mu_1, n, n1)
     )
 
-def F(s, r, n=N, n1=N1):
+
+def F(s, r, v, w0, mu, mu_1,  n=N, n1=N1):
     math_func = (0.5)*sympy.Sum(
         (2*(s+r+1))*b(s, v, w0, mu_1, r, n, n1)*Px(s+r, r, mu),
         (s, 0, n)
     )
 
-    return
+    return math_func
