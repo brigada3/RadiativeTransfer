@@ -56,7 +56,6 @@ def q_x(s, r, w0, n=N):
 
 
 def gamma(l, v, r, n=N, n1=N1):
-    ind = n1
     result = (
         (-1 +
             (sympy.exp(1)**(fi(v) + fi_1(v))*1j/2) *
@@ -64,20 +63,17 @@ def gamma(l, v, r, n=N, n1=N1):
         ) / 2 + 1
     )
 
-    while ind >= l:
+    for ind in range(n1, l-1, -1)
         result = 1 + a(ind, v, r, n)/result
-        ind = ind - 1
 
     return result
 
 
 def gamma_x(s, v, r, w0, n=N, n1=N1):
-    ind = n-r
     result = gamma(1, v, r, n, n1)]
 
-    while ind >= s:
+    for ind in range(n-r, s-1, -1):
         result = 1 + q_x(s, r, w0, n)*v/result
-        ind -= 1
     
     return result
 
