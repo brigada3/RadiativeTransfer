@@ -14,7 +14,9 @@ def main():
     alpha, l, j, v = sympy.symbols('alpha l j v')
     mu, mu_1 = sympy.symbols('mu mu_1')
 
-    print('b[2] = ', b_system.b(2, -0.5j, 0.95, 0.8, 0))
+    for i in range(21):
+        print('b[{}] = {}'.format(i, b_system.b(i, 1-0.5j, 0.95, 0.8, 0)))
+
 
 if __name__ == '__main__':
     main()

@@ -4,21 +4,25 @@
 import sympy
 import functools
 import logging
-#logging.basicConfig(filename='log', filemode='w', level=logging.DEBUG)
+logging.basicConfig(filename='log', filemode='w', level=logging.DEBUG)
 
 N = 20
-N1 = 24*N
+N1 = 600
 G = 0.999
 B = []
 
+
+@functools.lru_cache(maxsize=None)
 def f(s, g=G):
     return g**s
 
 
+@functools.lru_cache(maxsize=None)
 def epsilon_x(s, r):
     return sympy.sqrt(s*(s+2*r))
 
 
+@functools.lru_cache(maxsize=None)
 def kappa_x(s, r, w0, caller):
     logging.debug('Enter kappa_x called by {}'.format(caller))
     logging.debug('Kappa_x args: s={} r={} w0={}'.format(s,r,w0))    
@@ -27,6 +31,7 @@ def kappa_x(s, r, w0, caller):
     return math_func
 
 
+@functools.lru_cache(maxsize=None)
 def fi(v_arg):
     v = sympy.Symbol('v')
     math_func = sympy.Piecewise(
@@ -39,6 +44,7 @@ def fi(v_arg):
     return math_func.subs(v, v_arg)
 
 
+@functools.lru_cache(maxsize=None)
 def fi_1(v_arg):
     v = sympy.Symbol('v')    
     math_func = sympy.Piecewise(
@@ -84,26 +90,11 @@ def gamma(l, v, r, n=N, n1=N1):
         return result
     
     result = 1 + a(l, v, r, n)/gamma(l+1, v, r, n, n1)
+    result = result.simplify()
 
     logging.debug("Gamma result: {}".format(result))
     return result
 
-
-#def gamma_x(s, v, r, w0, n=N, n1=N1):
-#    logging.debug("Enter gamma_x")
-#    logging.debug("Args gamma_x: s={} r={} v={}".format(s, r, v))    
-#    result = gamma(1, v, r, n, n1)
-#    logging.debug("Init result via gamma = {}".format(result))
-#
-#    logging.debug("start ind gamma_x iteration")
-#    for ind in range(n-r, s-1, -1):
-#        #logging.debug("ind: ", ind)
-#        result = 1 + q_x(ind, r, w0, n)*v/result
-#        #logging.debug("new reuslt: ", result)
-#    
-#    logging.debug("Final result: {}".format(result))
-#    
-#    return result
 
 
 @functools.lru_cache(maxsize=None)
@@ -178,24 +169,40 @@ def psi_x(j, v, r, w0, n=N, n1=N1):
 
 @functools.lru_cache(maxsize=None)
 def nu_x(alpha, v, r, w0, mu_1, n=N, n1=N1):
+    logging.debug('Enter nu_x')
+    logging.debug('Args alpha=%s v=%s r=%s w0=%s mu_1=%s n=%s n1=%s' % (alpha, v, r, w0, mu_1, n, n1))
+    
     if alpha == n-r+1:
-        return 0
+        logging.debug('Condition alpha == n-r+1')
+        result = 0
+        logging.debug('Nu_x result: %s' % result)        
+        return result
     elif alpha == n-r:
-        return (
+        logging.debug('Condition alpha == n-r')
+        
+        result = (
             ((2*n+1)*f(n)*Px(alpha+r, r, mu_1)) /
-            (kappa_x(n-r, r, w0, "nu_x")*gamma_x(n-r, v**2, r, w0, n, n1))
+            (kappa_x(n-r, r, w0, "nu_x")*gamma_x(s=n-r, v=v**2, r=r, w0=w0, n=n, n1=n1))
         )
-    elif isinstance(alpha, int):    
-        nu_x_alpha_plus_1 = nu_x(alpha+1, v, w0, mu_1, n, n1)
+
+        logging.debug('Nu_x result: %s' % result)
+        return result
+    elif isinstance(alpha, int):
+        logging.debug('Nu_x recirsuon alpha+=1')
+        nu_x_alpha_plus_1 = nu_x(alpha+1, v, r, w0, mu_1, n, n1)
     else:
         ValueError('alpha')
 
-    return (
+    result = (
         (kappa_x(alpha, r, w0, "nu_x")*gamma_x(alpha, v**2, r, w0, n, n1))**(-1)*
         (1j*v*epsilon_x(alpha+1, r)*nu_x_alpha_plus_1 + 
             (2*(alpha+r)+1)*f(alpha+r)*Px(alpha+r, r, mu_1)
         )
-    )
+    ).simplify()
+
+    logging.debug('Nu_x result: %s' % result)
+    return result
+
 
 @functools.lru_cache(maxsize=None)
 def b(alpha, v, w0, mu_1, r, n=N, n1=N1):
@@ -212,21 +219,18 @@ def b(alpha, v, w0, mu_1, r, n=N, n1=N1):
             sum_result
         )
         logging.debug('b_0 = {}'.format(result))
-        B.insert(0, result)
         return result
     elif isinstance(alpha, int) and 1 <= alpha <= n-r and n-r > 1:
-        if alpha-1 < len(B):
-            b_alpha_minus_1 = B[alpha-1]
-        else:
-            b_alpha_minus_1 = b(alpha-1, v, w0, mu_1, r, n, n1)
+        b_alpha_minus_1 = b(alpha-1, v, w0, mu_1, r, n, n1)
     else:
         raise ValueError('alpha nust be integer')
 
     result = (
         h_x(alpha, v, r, w0, "b", n, n1) * b_alpha_minus_1 +
         nu_x(alpha, v, r, w0, mu_1, n, n1)
-    )
-    B.insert(alpha, result)
+    ).simplify()
+
+    logging.debug('B result: %s' % result)
     return result
 
 
