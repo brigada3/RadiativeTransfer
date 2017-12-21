@@ -19,15 +19,25 @@ def f(s, g=G):
 
 @functools.lru_cache(maxsize=None)
 def epsilon_x(s, r):
-    return sympy.sqrt(s*(s+2*r))
+    logging.debug('Enter epsilon_x')
+    logging.debug('Epsilon_x args s={} r={}'.format(s, r))
+    
+    math_func = (s*(s+2*r))**(1/2)
+    
+    logging.debug('Epsilon_x args s={} r={}'.format(s, r))
+    logging.debug('Epsilon_x result: {}'.format(math_func))    
+    return math_func
 
 
 @functools.lru_cache(maxsize=None)
-def kappa_x(s, r, w0, caller):
-    logging.debug('Enter kappa_x called by {}'.format(caller))
-    logging.debug('Kappa_x args: s={} r={} w0={}'.format(s,r,w0))    
+def kappa_x(s, r, w0):
+    logging.debug('Enter kappa_x')
+    logging.debug('Kappa_x args: s={} r={} w0={}'.format(s,r,w0))
+    
     math_func = (2*(s+r)+1) * (1-w0*f(s+r))
-    logging.debug('Kappa_x return {}'.format(math_func))    
+
+    logging.debug('Kappa_x args: s={} r={} w0={}'.format(s,r,w0))
+    logging.debug('Kappa_x result {}'.format(math_func))
     return math_func
 
 
@@ -59,19 +69,27 @@ def fi_1(v_arg):
 
 
 @functools.lru_cache(maxsize=None)
-def q_x(s_arg, r_arg, w0_arg, n_arg=N):
-    #logging.debug("Enter q_x, called by gamma_x")    
-    #logging.debug("Args: ", s_arg, r_arg, w0_arg)
-
-    s, r, n, w0 = sympy.symbols('s r n w0')
-    math_func = sympy.Piecewise(
-        ((s*(s+2*r))/((2*(s+r)+1)*(2*(s+r+1)+1)*(1-w0*f(s+r)*(1-w0*f(s+r+1)))), sympy.And(s+r+1<=n, n>=2)),
-        ((s*(s+2*r))/((2*(s+r)+1)*(2*(s+r+1)+1)*(1-w0*f(s+r))), sympy.Eq(s+r, n)),
-        ((s*(s+2*r))/((2*(s+r)+1)*(2*(s+r+1)+1)), s >= n-r+1)
-    )
-    #logging.debug("Result q_x: ", math_func.subs({s:s_arg, r:r_arg, n:n_arg, w0:w0_arg}), end='\n\n')
-
-    return math_func.subs({s:s_arg, r:r_arg, n:n_arg, w0:w0_arg})
+def q_x(s, r, w0, n=N):
+    logging.debug("Enter q_x, called by gamma_x")
+    logging.debug("Args: s={} r={} w0={}".format(s, r, w0))
+    if s <= n-r-1:
+        result = ((epsilon_x(s+1, r))**2) / (
+            (2*(s+r+1)+1) * (1-w0*f(s+r+1)) * 
+            (2*(s+r)+1) * (1-w0*f(s+r))
+        )
+    elif s == n-r:
+        result = ((epsilon_x(s+1, r))**2) / (
+            (2*(s+r)+1)*(1-w0*f(s+r)) *
+            (2*(s+r+1)+1)
+        )
+    elif s >= n-r+1:
+        result = ((epsilon_x(s+1, r))**2) / (
+            (2*(s+r+1)+1) * (2*(s+r)+1)
+        )
+   
+    logging.debug("Args: s={} r={} w0={}".format(s, r, w0))
+    logging.debug("q_x result: {}".format(result))
+    return result
 
 
 @functools.lru_cache(maxsize=None)
@@ -80,73 +98,91 @@ def gamma(l, v, r, n=N, n1=N1):
     logging.debug('Gamma args: l={}, v={}, r={}, n={}, n1={}'.format(l, v, r,  n, n1))
     
     if l == n1 + 1:
-        result = (
-            (-1 +
-                (sympy.exp(1)**(fi(v) + fi_1(v))*1j/2) *
-                ( (1+sympy.re(v)**2-sympy.im(v)**2)**2 + 4*sympy.re(v)**2*sympy.im(v)**2)**0.5
-            ) / 2 + 1
-        )
+        A = (0.5)*(-1 + (1+v)**(0.5))
+        logging.debug("A result = {}".format(A))        
+        result = 1 + a(0, v, r, n, n1)/(1 + A) 
         logging.debug("Gamma result = {}".format(result))
         return result
     
-    result = 1 + a(l, v, r, n)/gamma(l+1, v, r, n, n1)
-    result = result.simplify()
-
+    result = 1 + a(l, v, r, n, n1)/gamma(l+1, v, r, n, n1)
+    
+    logging.debug('Gamma args: l={}, v={}, r={}, n={}, n1={}'.format(l, v, r, n, n1))    
     logging.debug("Gamma result: {}".format(result))
     return result
 
 
-
 @functools.lru_cache(maxsize=None)
 def gamma_x(s, v, r, w0, n=N, n1=N1):
+    logging.debug('Enter gamma_x')
+    logging.debug('Gamma_x args: s={}, v={}, r={}, w0={}, n={}, n1={}'.format(s, v, r, w0, n, n1))
+    
     if s == n-r+1:
-        return gamma(1, v, r, n, n1)
+        result = gamma(l=1, v=v, r=r, n=n, n1=n1)
+        logging.debug('Gamma_x args: s={}, v={}, r={}, w0={}, n={}, n1={}'.format(s, v, r, w0, n, n1))        
+        logging.debug("Gamma_x s==n-r+1 result: {}".format(result))
+        return result
     elif isinstance(s, int):
         gamma_x_s_plus_1 = gamma_x(s+1, v, r, w0, n, n1)
     else:
         raise ValueError('s must be a number!')
 
-    return 1 + q_x(s, r, w0, n)*v/gamma_x_s_plus_1
+    result = 1 + q_x(s, r, w0, n)*v/gamma_x_s_plus_1
+    
+    logging.debug('Gamma_x args: s={}, v={}, r={}, w0={}, n={}, n1={}'.format(s, v, r, w0, n, n1))    
+    logging.debug("Gamma_x result: {}".format(result))
+    return result
 
 
 @functools.lru_cache(maxsize=None)
-def h_x(alpha, v, r, w0, caller, n=N, n1=N1):
-    logging.debug("Enter h_x called by {}".format(caller))
+def h_x(alpha, v, r, w0, n=N, n1=N1):
+    logging.debug("Enter h_x")
     logging.debug("Args h_x alpha={} v={} r={} w0={}".format(alpha, v, r, w0))
+    
     math_func = (
-        1j*v*epsilon_x(alpha, r) *
-        (kappa_x(alpha, r, w0, "h_x") * gamma_x((alpha), v**2, r, w0, n, n1))**(-1)
+        1j*v*epsilon_x(s=alpha, r=r) /
+        (kappa_x(s=alpha, r=r, w0=w0) * gamma_x(s=alpha, v=v**2, r=r, w0=w0, n=n, n1=n1))
     )
-    logging.debug("H_x return: {}".format(math_func))    
+
+    logging.debug("Args h_x alpha={} v={} r={} w0={}".format(alpha, v, r, w0))
+    logging.debug("H_x return: {}".format(math_func))
     return math_func
 
 
-def a(l, v, r, n=N):
-    math_func = ((n+l)**2-r**2)*v**2 /( (2*(n+l)+1) * (2*(n+l+1)+1) )
+@functools.lru_cache(maxsize=None)
+def a(l, v, r, n=N, n1=N1):
+    logging.debug('Enter a')
+    logging.debug('a args: l={}, v={}, r={}, n={}'.format(l, v, r,  n))
+    
+    math_func = ((n+n1-l)**2 - r**2)*v/( (2*(n+n1-l)+1) * (2*(n+n1-l+1)+1) )
+    
+    logging.debug('a args: l={}, v={}, r={}, n={}'.format(l, v, r,  n))
+    logging.debug('a result: {}'.format(math_func))
     return math_func
 
 
 @functools.lru_cache(maxsize=None)
 def Px(i, r, mu):
     logging.debug('Enter Px')
-    logging.debug('Px args: i={}, r={}, mu={}'.format(i, r, mu))    
+    logging.debug('Px args: i={}, r={}, mu={}'.format(i, r, mu))
+    if i == r:
+        result = (
+            (1-mu**2)**(0.5*r) * 2**(-r) *
+            (sympy.gamma(2*r+1)**(0.5)) / sympy.gamma(r+1)
+        )
+    elif i == r + 1:
+        result = (
+            mu*(1-mu**2)**(0.5*r) * 2**(-r) *
+            sympy.gamma(2*r+1)**(0.5) * (2*r+1)**(0.5) / sympy.gamma(r+1)
+        )
+    elif i >= 2 + r:
+        result = (
+            (mu*(2*i-1)*Px(i-1, r, mu) - 
+            Px(i-2, r, mu) * ((i-1)**2 - r**2)**(0.5)) / 
+            (i**2-r**2)**(0.5)
+        )
     
-    if i == r-1:
-        return 0
-    elif i == r:
-        return (1-mu**2)**(r/2) * (2)**(-r) * sympy.sqrt(sympy.factorial(2*r)/sympy.factorial(r)**2)
-    elif isinstance(i, int):
-        Px_i_minus_1 = Px(i-1, r, mu)
-        Px_i_minus_2 = Px(i-2, r, mu)
-    else:
-        raise ValueError('i must be integer')
-        
-    result = (
-        ( 2*i*mu*Px_i_minus_1 - sympy.sqrt((i-r-1)*(i+r-1)) * Px_i_minus_2 ) *
-        ( (i-r)*(i+r) )**(-1/2)
-    )
+    logging.debug('Px args: i={}, r={}, mu={}'.format(i, r, mu))    
     logging.debug('Px result: {}'.format(result))
-
     return result
 
 
@@ -158,12 +194,10 @@ def psi_x(j, v, r, w0, n=N, n1=N1):
     result = 1
     if j != 0:
         for l in range(1, j+1):
-            result *= h_x(l, v, r, w0, "psi_x", n, n1)
+            result *= h_x(alpha=l, v=v, r=r, w0=w0, n=n, n1=n1)
 
-    if not isinstance(result, int):
-        result = result.simplify()
-
-    logging.debug('psi_x return: {}'.format(result))
+    logging.debug('Args psi_x j={} v={} r={} w0={} n={} n1={}'.format(j, v, r, w0, n, n1))
+    logging.debug('psi_x result: {}'.format(result))
     return result
 
 
@@ -171,9 +205,9 @@ def psi_x(j, v, r, w0, n=N, n1=N1):
 def nu_x(alpha, v, r, w0, mu_1, n=N, n1=N1):
     logging.debug('Enter nu_x')
     logging.debug('Args alpha=%s v=%s r=%s w0=%s mu_1=%s n=%s n1=%s' % (alpha, v, r, w0, mu_1, n, n1))
-    
+
     if alpha == n-r+1:
-        logging.debug('Condition alpha == n-r+1')
+        logging.debug('Args alpha=%s v=%s r=%s w0=%s mu_1=%s n=%s n1=%s' % (alpha, v, r, w0, mu_1, n, n1))
         result = 0
         logging.debug('Nu_x result: %s' % result)        
         return result
@@ -181,10 +215,10 @@ def nu_x(alpha, v, r, w0, mu_1, n=N, n1=N1):
         logging.debug('Condition alpha == n-r')
         
         result = (
-            ((2*n+1)*f(n)*Px(alpha+r, r, mu_1)) /
-            (kappa_x(n-r, r, w0, "nu_x")*gamma_x(s=n-r, v=v**2, r=r, w0=w0, n=n, n1=n1))
+            (2*n+1)*f(n)*Px(n, r, mu_1) /
+            (kappa_x(n-r, r, w0)*gamma_x(s=n-r, v=v**2, r=r, w0=w0, n=n, n1=n1))
         )
-
+        logging.debug('Args alpha=%s v=%s r=%s w0=%s mu_1=%s n=%s n1=%s' % (alpha, v, r, w0, mu_1, n, n1))
         logging.debug('Nu_x result: %s' % result)
         return result
     elif isinstance(alpha, int):
@@ -194,12 +228,13 @@ def nu_x(alpha, v, r, w0, mu_1, n=N, n1=N1):
         ValueError('alpha')
 
     result = (
-        (kappa_x(alpha, r, w0, "nu_x")*gamma_x(alpha, v**2, r, w0, n, n1))**(-1)*
-        (1j*v*epsilon_x(alpha+1, r)*nu_x_alpha_plus_1 + 
+        (kappa_x(s=alpha, r=r, w0=w0)*gamma_x(s=alpha, v=v**2, r=r, w0=w0, n=n, n1=n1))**(-1) *
+        (1j*v*epsilon_x(s=alpha+1, r=r)*nu_x_alpha_plus_1 + 
             (2*(alpha+r)+1)*f(alpha+r)*Px(alpha+r, r, mu_1)
         )
     ).simplify()
 
+    logging.debug('Args alpha=%s v=%s r=%s w0=%s mu_1=%s n=%s n1=%s' % (alpha, v, r, w0, mu_1, n, n1))
     logging.debug('Nu_x result: %s' % result)
     return result
 
@@ -208,17 +243,21 @@ def nu_x(alpha, v, r, w0, mu_1, n=N, n1=N1):
 def b(alpha, v, w0, mu_1, r, n=N, n1=N1):
     logging.debug('Enter b')
     logging.debug('Args b: alpha={} v={} w0={} mu_1={} r={} n={} n1={}'.format(alpha, v, w0, mu_1, r, n, n1))
+    
     if alpha == 0 and n-r >= 0:
         sum_result = 0
         for j in range(0, n-r+1):
-            sum_result += psi_x(j, v, r, w0, n, n1)*(2*(j+r)+1)*f(j+r)*Px(j+r, r, mu_1)
+            sum_result += psi_x(j=j, v=v, r=r, w0=w0, n=n, n1=n1)*(2*(j+r)+1)*f(j+r)*Px(j+r, r, mu_1)
         logging.debug('sum_result = {}'.format(sum_result))  
+
         result = (
-            (kappa_x(0, r, w0, "b") * 
+            (kappa_x(0, r, w0) * 
             gamma_x(0, v**2, r, w0, n, n1))**(-1) *
             sum_result
         )
-        logging.debug('b_0 = {}'.format(result))
+        result = result.simplify()
+        logging.debug('Args b: alpha={} v={} w0={} mu_1={} r={} n={} n1={}'.format(alpha, v, w0, mu_1, r, n, n1))
+        logging.debug('b_0 result: {}'.format(result))
         return result
     elif isinstance(alpha, int) and 1 <= alpha <= n-r and n-r > 1:
         b_alpha_minus_1 = b(alpha-1, v, w0, mu_1, r, n, n1)
@@ -226,18 +265,27 @@ def b(alpha, v, w0, mu_1, r, n=N, n1=N1):
         raise ValueError('alpha nust be integer')
 
     result = (
-        h_x(alpha, v, r, w0, "b", n, n1) * b_alpha_minus_1 +
+        h_x(alpha, v, r, w0, n, n1) * b_alpha_minus_1 +
         nu_x(alpha, v, r, w0, mu_1, n, n1)
     ).simplify()
-
+    
+    logging.debug('Args b: alpha={} v={} w0={} mu_1={} r={} n={} n1={}'.format(alpha, v, w0, mu_1, r, n, n1))
     logging.debug('B result: %s' % result)
     return result
 
 
+@functools.lru_cache(maxsize=None)
 def F(s, r, v, w0, mu, mu_1,  n=N, n1=N1):
-    math_func = (0.5)*sympy.Sum(
-        (2*(s+r+1))*b(s, v, w0, mu_1, r, n, n1)*Px(s+r, r, mu),
-        (s, 0, n)
-    )
+    logging.debug('Enter F')
+    logging.debug('Args F j={} v={} r={} w0={} n={} n1={}'.format(j, v, r, w0, n, n1))
+    
+    result = 0
+    for s in range(0, n+1):
+       result += (
+           (2*(s+r+1))*b(s, v, w0, mu_1, r, n, n1)*Px(s+r, r, mu),
+       )
+    result = (0.5)*result
 
-    return math_func
+    logging.debug('Args F j={} v={} r={} w0={} n={} n1={}'.format(j, v, r, w0, n, n1))
+    logging.debug('F result: {}'.format(result))
+    return result

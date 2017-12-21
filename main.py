@@ -3,19 +3,24 @@
 
 import sys
 import logging
-import sympy
 import b_system
 
 def main():
-    sympy.init_printing()
     sys.setrecursionlimit(10000000)
 
-    s, r, w0, i, n = sympy.symbols('s r w0 i n')
-    alpha, l, j, v = sympy.symbols('alpha l j v')
-    mu, mu_1 = sympy.symbols('mu mu_1')
+    v, w0, mu_1, r = 1-0.5j, 0.95, 0.8, 0
+    b = []
 
     for i in range(21):
-        print('b[{}] = {}'.format(i, b_system.b(i, 1-0.5j, 0.95, 0.8, 0)))
+        b.append(b_system.b(i, v, w0, mu_1, r))
+        print('b[{}] = {}'.format(i, b[i]))
+    
+    for s in range(20): 
+        left = (i*v*b_system.epsilon_x(s+1, r)*b[s+1] + i*v*b_system.epsilon_x(s-1, r)*b[s-1]).simplify()
+        right = (b_system.kappa_x(s, r, w0)*b[s] - 
+            (2*(s+r)+1)*b_system.f(s+r) * 
+            b_system.Px(s+r, r, mu_1)).simplify()
+        print('delta', left-right)
 
 
 if __name__ == '__main__':
