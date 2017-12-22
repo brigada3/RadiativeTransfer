@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*-coding: utf-8 -*-
 
-import sympy
+import sympy, scipy.special
 import functools
 import logging
 #logging.basicConfig(filename='log', filemode='w', level=logging.DEBUG)
@@ -40,6 +40,9 @@ def kappa_x(s, r, w0):
 
 @functools.lru_cache(maxsize=None)
 def fi(v_arg):
+    logging.debug('Enter fi')
+    logging.debug('fi args: v={}'.format(v))
+    
     v = sympy.Symbol('v')
     math_func = sympy.Piecewise(
         (sympy.atan(sympy.im(v-1j)/sympy.re(v-1j)), sympy.re(v-1j) > 0),
@@ -47,8 +50,13 @@ def fi(v_arg):
         (-sympy.pi/2 - sympy.atan(sympy.re(v-1j)/sympy.im(v-1j)), sympy.And(sympy.re(v-1j)<0, sympy.im(v-1j)<0)),
         (-sympy.pi, sympy.And(sympy.re(v-1j)<0, sympy.Eq(sympy.im(v-1j), 0))),
         (-sympy.pi + sympy.atan(sympy.im(v-1j)/sympy.re(v-1j)), sympy.And(sympy.re(v-1j)<0, sympy.im(v-1j)>0))
+
     )
-    return math_func.subs(v, v_arg)
+
+    result = math_func.subs(v, v_arg)
+    logging.debug('fi args: v={}'.format(v))
+    logging.debug('fi result {}'.format(result))    
+    return result
 
 
 @functools.lru_cache(maxsize=None)
@@ -105,23 +113,16 @@ def maple_f(i, v, r, n, n1):
         )
 
     logging.debug('Args i={}, v={}, r={}, n={}, n1={}'.format(i, v, r, n, n1))
-    logging.debug('maple_f result: result={}'.format(result))
+    logging.debug('maple_f result: {}'.format(result))
     return result
+
 
 @functools.lru_cache(maxsize=None)
 def gamma(l, v, r, n, n1):
-    return maple_f(n1-1, v, r, n, n1)
     logging.debug('Enter gamma')
     logging.debug('Gamma args: l={}, v={}, r={}, n={}, n1={}'.format(l, v, r,  n, n1))
-    
-    if l == n1 + 1:
-        A = (0.5)*(-1 + (1+v)**(0.5))
-        logging.debug("A result = {}".format(A))        
-        result = 1 + a(0, v, r, n, n1)/(1 + A) 
-        logging.debug("Gamma result = {}".format(result))
-        return result
-    
-    result = 1 + a(l, v, r, n, n1)/gamma(l+1, v, r, n, n1)
+
+    result = maple_f(n1-1, v, r, n, n1)
     
     logging.debug('Gamma args: l={}, v={}, r={}, n={}, n1={}'.format(l, v, r, n, n1))    
     logging.debug("Gamma result: {}".format(result))
@@ -184,12 +185,12 @@ def Px(i, r, mu):
     if i == r:
         result = (
             (1-mu**2)**(0.5*r) * 2**(-r) *
-            (sympy.gamma(2*r+1)**(0.5)) / sympy.gamma(r+1)
+            (scipy.special.gamma(2*r+1)**(0.5)) / scipy.special.gamma(r+1)
         )
     elif i == r + 1:
         result = (
             mu*(1-mu**2)**(0.5*r) * 2**(-r) *
-            sympy.gamma(2*r+1)**(0.5) * (2*r+1)**(0.5) / sympy.gamma(r+1)
+            scipy.special.gamma(2*r+1)**(0.5) * (2*r+1)**(0.5) / scipy.special.gamma(r+1)
         )
     elif i >= 2 + r:
         result = (
@@ -200,7 +201,8 @@ def Px(i, r, mu):
     
     logging.debug('Px args: i={}, r={}, mu={}'.format(i, r, mu))    
     logging.debug('Px result: {}'.format(result))
-    return result
+    print 
+    return float(result)
 
 
 @functools.lru_cache(maxsize=None)
@@ -249,7 +251,7 @@ def nu_x(alpha, v, r, w0, mu_1, n, n1):
         (1j*v*epsilon_x(s=alpha+1, r=r)*nu_x_alpha_plus_1 + 
             (2*(alpha+r)+1)*f(alpha+r)*Px(alpha+r, r, mu_1)
         )
-    ).simplify()
+    )
 
     logging.debug('Args alpha=%s v=%s r=%s w0=%s mu_1=%s n=%s n1=%s' % (alpha, v, r, w0, mu_1, n, n1))
     logging.debug('Nu_x result: %s' % result)
@@ -265,14 +267,13 @@ def b(alpha, v, w0, mu_1, r, n, n1):
         sum_result = 0
         for j in range(0, n-r+1):
             sum_result += psi_x(j=j, v=v, r=r, w0=w0, n=n, n1=n1)*(2*(j+r)+1)*f(j+r)*Px(j+r, r, mu_1)
-        logging.debug('sum_result = {}'.format(sum_result))  
+        logging.debug('sum_result = {}'.format(sum_result))
 
         result = (
             (kappa_x(0, r, w0) * 
             gamma_x(0, v**2, r, w0, n, n1))**(-1) *
             sum_result
         )
-        result = result.simplify()
         logging.debug('Args b: alpha={} v={} w0={} mu_1={} r={} n={} n1={}'.format(alpha, v, w0, mu_1, r, n, n1))
         logging.debug('b_0 result: {}'.format(result))
         return result
@@ -285,24 +286,25 @@ def b(alpha, v, w0, mu_1, r, n, n1):
     result = (
         h_x(alpha, v, r, w0, n, n1) * b_alpha_minus_1 +
         nu_x(alpha, v, r, w0, mu_1, n, n1)
-    ).simplify()
+    )
     
     logging.debug('Args b: alpha={} v={} w0={} mu_1={} r={} n={} n1={}'.format(alpha, v, w0, mu_1, r, n, n1))
     logging.debug('B result: %s' % result)
     return result
 
 
-@functools.lru_cache(maxsize=None)
 def F(r, v, w0, mu, n, n1):
     logging.debug('Enter F')
-    logging.debug('Args F s={} v={} w0={} n={} n1={}'.format(r, v, w0, n, n1))
+    logging.debug('Args F r={} v={} w0={} n={} n1={}'.format(r, v, w0, n, n1))
     
     result = 0
-    for s in range(0, n-r+1):
-       result += (
-           (2*(s+r+1))*b(s, v, w0, mu, r, n, n1)*Px(s+r, r, mu)
-       )
-    result = (0.5)*result
+    for k in range(0, n-r+1):
+        result += (
+            (2*k+2*r+1) *
+            b(alpha=k, v=v, w0=w0, mu_1=mu, r=r, n=n, n1=n1) *
+            Px(k+r, r, mu)
+        )
+    result = result/2
 
     logging.debug('Args F r={} v={} w0={} n={} n1={}'.format(r, v, w0, n, n1))
     logging.debug('F result: {}'.format(result))
