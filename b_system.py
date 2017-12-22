@@ -4,7 +4,7 @@
 import sympy
 import functools
 import logging
-logging.basicConfig(filename='log', filemode='w', level=logging.DEBUG)
+#logging.basicConfig(filename='log', filemode='w', level=logging.DEBUG)
 
 G = 0.999
 
@@ -90,7 +90,27 @@ def q_x(s, r, w0, n):
 
 
 @functools.lru_cache(maxsize=None)
+def maple_f(i, v, r, n, n1):
+    logging.debug('Enter maple_f')
+    logging.debug('Args i={}, v={}, r={}, n={}, n1={}'.format(i, v, r, n, n1))
+    
+    if i == 0:
+        A = (0.5)*(-1 + (1+v)**(0.5))
+        result = (
+            1 + a(l=0, v=v, r=r, n=n, n1=n1)/(1+A)
+        )
+    else:
+        result = (
+            1 + a(l=i, v=v, r=r, n=n, n1=n1)/maple_f(i-1, v,r,n,n1)
+        )
+
+    logging.debug('Args i={}, v={}, r={}, n={}, n1={}'.format(i, v, r, n, n1))
+    logging.debug('maple_f result: result={}'.format(result))
+    return result
+
+@functools.lru_cache(maxsize=None)
 def gamma(l, v, r, n, n1):
+    return maple_f(n1-1, v, r, n, n1)
     logging.debug('Enter gamma')
     logging.debug('Gamma args: l={}, v={}, r={}, n={}, n1={}'.format(l, v, r,  n, n1))
     
@@ -256,9 +276,10 @@ def b(alpha, v, w0, mu_1, r, n, n1):
         logging.debug('Args b: alpha={} v={} w0={} mu_1={} r={} n={} n1={}'.format(alpha, v, w0, mu_1, r, n, n1))
         logging.debug('b_0 result: {}'.format(result))
         return result
-    elif isinstance(alpha, int) and 1 <= alpha <= n-r and n-r > 1:
+    elif isinstance(alpha, int) and 1 <= alpha <= n-r and n-r >= 1:
         b_alpha_minus_1 = b(alpha-1, v, w0, mu_1, r, n, n1)
     else:
+        print(alpha)
         raise ValueError('alpha nust be integer')
 
     result = (
@@ -272,17 +293,17 @@ def b(alpha, v, w0, mu_1, r, n, n1):
 
 
 @functools.lru_cache(maxsize=None)
-def F(s, r, v, w0, mu, n, n1):
+def F(r, v, w0, mu, n, n1):
     logging.debug('Enter F')
-    logging.debug('Args F s={} v={} r={} w0={} n={} n1={}'.format(s, v, r, w0, n, n1))
+    logging.debug('Args F s={} v={} w0={} n={} n1={}'.format(r, v, w0, n, n1))
     
     result = 0
-    for s in range(0, n+1):
+    for s in range(0, n-r+1):
        result += (
            (2*(s+r+1))*b(s, v, w0, mu, r, n, n1)*Px(s+r, r, mu)
        )
     result = (0.5)*result
 
-    logging.debug('Args F s={} v={} r={} w0={} n={} n1={}'.format(s, v, r, w0, n, n1))
+    logging.debug('Args F r={} v={} w0={} n={} n1={}'.format(r, v, w0, n, n1))
     logging.debug('F result: {}'.format(result))
     return result
