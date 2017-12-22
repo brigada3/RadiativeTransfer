@@ -3,24 +3,27 @@
 
 import sys
 import logging
-import b_system
+from b_system import b, Px, epsilon_x, kappa_x, F, f    
 
 def main():
     sys.setrecursionlimit(10000000)
 
-    v, w0, mu_1, r = 1-0.5j, 0.95, 0.8, 0
-    b = []
+    v, w0, mu, r, n, n1 = 1-0.5j, 0.95, 0.8, 0, 20, 600
 
+    b_values = []
     for i in range(21):
-        b.append(b_system.b(i, v, w0, mu_1, r))
-        print('b[{}] = {}'.format(i, b[i]))
-    
-    for s in range(20): 
-        left = (i*v*b_system.epsilon_x(s+1, r)*b[s+1] + i*v*b_system.epsilon_x(s-1, r)*b[s-1]).simplify()
-        right = (b_system.kappa_x(s, r, w0)*b[s] - 
-            (2*(s+r)+1)*b_system.f(s+r) * 
-            b_system.Px(s+r, r, mu_1)).simplify()
-        print('delta', left-right)
+        b_values.append(b(i, v, w0, mu, r, n, n1))
+        print('b[{}] = {}'.format(i, b_values[i]))
+        print('F[{}] = {}'.format(i, F(i, r, v, w0, mu, n, n1)))
+
+    for i in range(0, n-r):
+        delta = (
+            1j*v*(
+                epsilon_x(i+1, r)*b_values[i+1] +
+                epsilon_x(i, r)*b_values[i-1]
+            ) - kappa_x(i, r, w0) * b_values[i] + (2*(r+i)+1)*f(r+i)*Px(r+i, r, mu)
+        ).simplify()
+        print('delta', delta)
 
 
 if __name__ == '__main__':

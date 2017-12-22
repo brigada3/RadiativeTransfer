@@ -6,10 +6,7 @@ import functools
 import logging
 logging.basicConfig(filename='log', filemode='w', level=logging.DEBUG)
 
-N = 20
-N1 = 600
 G = 0.999
-B = []
 
 
 @functools.lru_cache(maxsize=None)
@@ -69,7 +66,7 @@ def fi_1(v_arg):
 
 
 @functools.lru_cache(maxsize=None)
-def q_x(s, r, w0, n=N):
+def q_x(s, r, w0, n):
     logging.debug("Enter q_x, called by gamma_x")
     logging.debug("Args: s={} r={} w0={}".format(s, r, w0))
     if s <= n-r-1:
@@ -93,7 +90,7 @@ def q_x(s, r, w0, n=N):
 
 
 @functools.lru_cache(maxsize=None)
-def gamma(l, v, r, n=N, n1=N1):
+def gamma(l, v, r, n, n1):
     logging.debug('Enter gamma')
     logging.debug('Gamma args: l={}, v={}, r={}, n={}, n1={}'.format(l, v, r,  n, n1))
     
@@ -112,7 +109,7 @@ def gamma(l, v, r, n=N, n1=N1):
 
 
 @functools.lru_cache(maxsize=None)
-def gamma_x(s, v, r, w0, n=N, n1=N1):
+def gamma_x(s, v, r, w0, n, n1):
     logging.debug('Enter gamma_x')
     logging.debug('Gamma_x args: s={}, v={}, r={}, w0={}, n={}, n1={}'.format(s, v, r, w0, n, n1))
     
@@ -134,7 +131,7 @@ def gamma_x(s, v, r, w0, n=N, n1=N1):
 
 
 @functools.lru_cache(maxsize=None)
-def h_x(alpha, v, r, w0, n=N, n1=N1):
+def h_x(alpha, v, r, w0, n, n1):
     logging.debug("Enter h_x")
     logging.debug("Args h_x alpha={} v={} r={} w0={}".format(alpha, v, r, w0))
     
@@ -149,7 +146,7 @@ def h_x(alpha, v, r, w0, n=N, n1=N1):
 
 
 @functools.lru_cache(maxsize=None)
-def a(l, v, r, n=N, n1=N1):
+def a(l, v, r, n, n1):
     logging.debug('Enter a')
     logging.debug('a args: l={}, v={}, r={}, n={}'.format(l, v, r,  n))
     
@@ -187,7 +184,7 @@ def Px(i, r, mu):
 
 
 @functools.lru_cache(maxsize=None)
-def psi_x(j, v, r, w0, n=N, n1=N1):
+def psi_x(j, v, r, w0, n, n1):
     logging.debug('Enter psi_x called by b')
     logging.debug('Args psi_x j={} v={} r={} w0={} n={} n1={}'.format(j, v, r, w0, n, n1))
     
@@ -202,7 +199,7 @@ def psi_x(j, v, r, w0, n=N, n1=N1):
 
 
 @functools.lru_cache(maxsize=None)
-def nu_x(alpha, v, r, w0, mu_1, n=N, n1=N1):
+def nu_x(alpha, v, r, w0, mu_1, n, n1):
     logging.debug('Enter nu_x')
     logging.debug('Args alpha=%s v=%s r=%s w0=%s mu_1=%s n=%s n1=%s' % (alpha, v, r, w0, mu_1, n, n1))
 
@@ -240,7 +237,7 @@ def nu_x(alpha, v, r, w0, mu_1, n=N, n1=N1):
 
 
 @functools.lru_cache(maxsize=None)
-def b(alpha, v, w0, mu_1, r, n=N, n1=N1):
+def b(alpha, v, w0, mu_1, r, n, n1):
     logging.debug('Enter b')
     logging.debug('Args b: alpha={} v={} w0={} mu_1={} r={} n={} n1={}'.format(alpha, v, w0, mu_1, r, n, n1))
     
@@ -275,17 +272,17 @@ def b(alpha, v, w0, mu_1, r, n=N, n1=N1):
 
 
 @functools.lru_cache(maxsize=None)
-def F(s, r, v, w0, mu, mu_1,  n=N, n1=N1):
+def F(s, r, v, w0, mu, n, n1):
     logging.debug('Enter F')
-    logging.debug('Args F j={} v={} r={} w0={} n={} n1={}'.format(j, v, r, w0, n, n1))
+    logging.debug('Args F s={} v={} r={} w0={} n={} n1={}'.format(s, v, r, w0, n, n1))
     
     result = 0
     for s in range(0, n+1):
        result += (
-           (2*(s+r+1))*b(s, v, w0, mu_1, r, n, n1)*Px(s+r, r, mu),
+           (2*(s+r+1))*b(s, v, w0, mu, r, n, n1)*Px(s+r, r, mu)
        )
     result = (0.5)*result
 
-    logging.debug('Args F j={} v={} r={} w0={} n={} n1={}'.format(j, v, r, w0, n, n1))
+    logging.debug('Args F s={} v={} r={} w0={} n={} n1={}'.format(s, v, r, w0, n, n1))
     logging.debug('F result: {}'.format(result))
     return result
