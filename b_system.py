@@ -18,11 +18,11 @@ def f(s, g=G):
 def epsilon_x(s, r):
     logging.debug('Enter epsilon_x')
     logging.debug('Epsilon_x args s={} r={}'.format(s, r))
-    
+
     math_func = (s*(s+2*r))**(1/2)
-    
+
     logging.debug('Epsilon_x args s={} r={}'.format(s, r))
-    logging.debug('Epsilon_x result: {}'.format(math_func))    
+    logging.debug('Epsilon_x result: {}'.format(math_func))
     return math_func
 
 
@@ -30,7 +30,7 @@ def epsilon_x(s, r):
 def kappa_x(s, r, w0):
     logging.debug('Enter kappa_x')
     logging.debug('Kappa_x args: s={} r={} w0={}'.format(s,r,w0))
-    
+
     math_func = (2*(s+r)+1) * (1-w0*f(s+r))
 
     logging.debug('Kappa_x args: s={} r={} w0={}'.format(s,r,w0))
@@ -79,7 +79,7 @@ def q_x(s, r, w0, n):
     logging.debug("Args: s={} r={} w0={}".format(s, r, w0))
     if s <= n-r-1:
         result = ((epsilon_x(s+1, r))**2) / (
-            (2*(s+r+1)+1) * (1-w0*f(s+r+1)) * 
+            (2*(s+r+1)+1) * (1-w0*f(s+r+1)) *
             (2*(s+r)+1) * (1-w0*f(s+r))
         )
     elif s == n-r:
@@ -91,7 +91,7 @@ def q_x(s, r, w0, n):
         result = ((epsilon_x(s+1, r))**2) / (
             (2*(s+r+1)+1) * (2*(s+r)+1)
         )
-   
+
     logging.debug("Args: s={} r={} w0={}".format(s, r, w0))
     logging.debug("q_x result: {}".format(result))
     return result
@@ -117,6 +117,7 @@ def maple_f(i, v, r, n, n1):
     return result
 
 
+
 @functools.lru_cache(maxsize=None)
 def gamma(l, v, r, n, n1):
     logging.debug('Enter gamma')
@@ -133,7 +134,18 @@ def gamma(l, v, r, n, n1):
 def gamma_x(s, v, r, w0, n, n1):
     logging.debug('Enter gamma_x')
     logging.debug('Gamma_x args: s={}, v={}, r={}, w0={}, n={}, n1={}'.format(s, v, r, w0, n, n1))
-    
+
+    #if s == 0:
+    #    result = (
+    #        1 + q_x(s=n-r-s, r=r, w0=w0, n=n)*v/gamma(l=0, v=v, r=r, n=n, n1=n1)
+    #    )
+    #else:
+    #    result = (
+    #        1 + q_x(s=n-r-s, r=r, w0=w0, n=n)*v/gamma_x(s=s-1, v=v, r=r, w0=w0, n=n, n1=n1)
+    #    )
+    #logging.debug('Gamma_x args: s={}, v={}, r={}, w0={}, n={}, n1={}'.format(s, v, r, w0, n, n1))    
+    #logging.debug("Gamma_x result: {}".format(result))
+    #return result
     if s == n-r+1:
         result = gamma(l=1, v=v, r=r, n=n, n1=n1)
         logging.debug('Gamma_x args: s={}, v={}, r={}, w0={}, n={}, n1={}'.format(s, v, r, w0, n, n1))        
@@ -143,9 +155,8 @@ def gamma_x(s, v, r, w0, n, n1):
         gamma_x_s_plus_1 = gamma_x(s+1, v, r, w0, n, n1)
     else:
         raise ValueError('s must be a number!')
-
-    result = 1 + q_x(s, r, w0, n)*v/gamma_x_s_plus_1
     
+    result = 1 + q_x(s, r, w0, n)*v/gamma_x_s_plus_1
     logging.debug('Gamma_x args: s={}, v={}, r={}, w0={}, n={}, n1={}'.format(s, v, r, w0, n, n1))    
     logging.debug("Gamma_x result: {}".format(result))
     return result
@@ -185,12 +196,12 @@ def Px(i, r, mu):
     if i == r:
         result = (
             (1-mu**2)**(0.5*r) * 2**(-r) *
-            (scipy.special.gamma(2*r+1)**(0.5)) / scipy.special.gamma(r+1)
+            (sympy.gamma(2*r+1)**(0.5)) / sympy.gamma(r+1)
         )
     elif i == r + 1:
         result = (
             mu*(1-mu**2)**(0.5*r) * 2**(-r) *
-            scipy.special.gamma(2*r+1)**(0.5) * (2*r+1)**(0.5) / scipy.special.gamma(r+1)
+            sympy.gamma(2*r+1)**(0.5) * (2*r+1)**(0.5) / sympy.gamma(r+1)
         )
     elif i >= 2 + r:
         result = (
@@ -293,16 +304,17 @@ def b(alpha, v, w0, mu_1, r, n, n1):
     return result
 
 
+@functools.lru_cache(maxsize=None)
 def F(r, v, w0, mu, n, n1):
     logging.debug('Enter F')
     logging.debug('Args F r={} v={} w0={} n={} n1={}'.format(r, v, w0, n, n1))
     
     result = 0
     for k in range(0, n-r+1):
+        b_res = b(alpha=k, v=v, w0=w0, mu_1=mu, r=r, n=n, n1=n1)
+        px_res = Px(k+r, r, mu)
         result += (
-            (2*k+2*r+1) *
-            b(alpha=k, v=v, w0=w0, mu_1=mu, r=r, n=n, n1=n1) *
-            Px(k+r, r, mu)
+            (2*k+2*r+1) * b_res * px_res
         )
     result = result/2
 
