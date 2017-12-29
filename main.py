@@ -22,7 +22,7 @@ def main():
             v = v - v.imag*1j + v.real + re_step
 
         F_v_result = 0
-        for r in range(619, n+1):
+        for r in range(0, n+1):
             F_r_result = F(r=r, v=v, w0=w0, mu=mu, n=n, n1=n1)
 
             fi, step = -scipy.pi, 0.1
