@@ -33,10 +33,10 @@ def main():
             logging.info('F[r=%s][v=%s] = %s', r, v, F_r_result)
 
         F_v[v] = F_v_result/(2*scipy.pi)
-        logging.info('F[v=%s] = %s', v, F_v_result)
+        logging.info('F[v=%s] = %s', v, F_v[v])
 
     result = sum(F_v.values)
-    logging.info('F_v sum: %s', F_v_result)
+    logging.info('F_v sum: %s', result)
 
 
 
