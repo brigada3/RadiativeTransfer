@@ -9,9 +9,9 @@ from b_system import b, F
 
 def main():
     sys.setrecursionlimit(10000000)
-    logging.basicConfig(filename='log', filemode='w', level=logging.INFO)
+    logging.basicConfig(filename='log', filemode='w', level=logging.DEBUG)
 
-    w0, mu, n, n1 = 0.95, 0.8, 100, 600
+    w0, mu, n, n1 = 0.95, 0.8, 1000, 600
 
     F_v = {}
     v = -1 - 1j
@@ -22,18 +22,23 @@ def main():
             v = v - v.imag*1j + v.real + re_step
 
         F_v_result = 0
-        for r in range(0, n+1):
-            f_res = F(r=r, v=v, w0=w0, mu=mu, n=n, n1=n1)
+        for r in range(619, n+1):
+            F_r_result = F(r=r, v=v, w0=w0, mu=mu, n=n, n1=n1)
 
             fi, step = -scipy.pi, 0.1
             while -scipy.pi <= fi <= scipy.pi:
-                F_v_result += f_res * scipy.exp(1j*r*fi)
+                F_v_result += F_r_result * scipy.exp(1j*r*fi)
                 fi += step
 
-            logging.info('F[r={}][v={}] = {}'.format(r, v, f_res))
+            logging.info('F[r=%s][v=%s] = %s', r, v, F_r_result)
 
-        F_v[v] = F_v_result
-        logging.info('F[v={}] = {}'.format(v, F_v_result))        
+        F_v[v] = F_v_result/F_v_result
+        logging.info('F[v=%s] = %s', v, F_v_result)
+
+    result = sum(F_v.values)
+    logging.info('F_v sum: %s', F_v_result)
+
+
 
 if __name__ == '__main__':
     main()
