@@ -5,6 +5,7 @@ import sys
 import logging
 import scipy
 from b_system import F
+from mpi import MpiProcess
 
 
 w0, mu, n, n1 = 0.95, 0.8, 1000, 600
@@ -28,23 +29,50 @@ def calc_f_v_result(v):
 
 def main():
     sys.setrecursionlimit(10000000)
-    logging.basicConfig(filename='log', filemode='w', level=logging.DEBUG)
 
     F_v = {}
-    v = -1 - 1j
-    im_step, re_step = 0.1j, 0.5
-    for i in range(101):
-        v += im_step
-        if not -1 < v.imag < 1:
-            v = v - v.imag*1j + v.real + re_step
 
-        F_v_result = calc_f_v_result(v)
+    def result_collector(mpi, data):
+        v, i, F_v_result = data
 
         F_v[v] = F_v_result/(2*scipy.pi)
-        logging.info('F[v=%s] = %s', v, F_v[v])
 
-    result = sum(F_v.values())
-    logging.info('F_v sum: %s', result)
+    def worker(mpi):
+        while 0 == 0:
+            data = mpi.recv_from_master()
+            if data is None:
+                break
+
+            v, i = data
+
+            F_v_result = calc_f_v_result(v)
+
+            mpi.send_to_master((v, i, F_v_result))
+
+    def master(mpi):
+        v = -1 - 1j
+        im_step, re_step = 0.1j, 0.5
+
+        for i in range(101):
+            v += im_step
+            if not -1 < v.imag < 1:
+                v = v - v.imag*1j + v.real + re_step
+
+            mpi.send_to_worker((v, i))
+
+        mpi.wait_all_workers()
+
+        result = sum(F_v.values())
+        logging.info('F_v sum: %s', result)
+
+    process = MpiProcess(worker, master, result_collector)
+
+    logging.basicConfig(
+        filename='log' + str(process.rank),
+        filemode='w',
+        level=logging.INFO)
+
+    process.run()
 
 
 if __name__ == '__main__':
